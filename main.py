@@ -16,8 +16,13 @@ def handle_message(update, context):
     update.message.reply_text("⏳ Скачиваю...")
     
     try:
+        # Извлекаем короткий код (shortcode) из ссылки
+        # Пример: https://www.instagram.com/p/Ctt5XupruCM/ -> Ctt5XupruCM
+        shortcode = url.split("/")[-2]
+        
         loader = instaloader.Instaloader()
-        post = instaloader.Post.from_url(loader.context, url)
+        # Используем правильный метод from_shortcode
+        post = instaloader.Post.from_shortcode(loader.context, shortcode)
         
         if not os.path.exists("download"):
             os.makedirs("download")
