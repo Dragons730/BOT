@@ -17,7 +17,6 @@ def handle_message(update, context):
     
     if "tiktok.com" in url:
         try:
-
             data = tiktok_downloader.snaptik(url)
             if data and hasattr(data, 'video_url'):
                 update.message.reply_video(data.video_url)
