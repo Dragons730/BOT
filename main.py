@@ -1,6 +1,6 @@
 import os
 import instaloader
-import tiktok_downloader
+import yt_dlp
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 TOKEN = os.environ.get("BOT_TOKEN", "ВАШ_ТОКЕН_СЮДА")
@@ -11,15 +11,36 @@ def start(update, context):
         "Просто отправь мне ссылку на пост, Reels или TikTok."
     )
 
+def download_tiktok(url):
+    ydl_opts = {
+        'outtmpl': 'download/%(title)s.%(ext)s',
+        'quiet': True,
+        'no_warnings': True,
+        'extract_flat': False,
+        'format': 'bestvideo+bestaudio/best',
+        'merge_output_format': 'mp4',
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=True)
+        return ydl.prepare_filename(info)
+
 def handle_message(update, context):
     url = update.message.text
     update.message.reply_text("⏳ Скачиваю...")
     
     if "tiktok.com" in url:
         try:
-            data = tiktok_downloader.snaptik(url)
-            if data and hasattr(data, 'video_url'):
-                update.message.reply_video(data.video_url)
+            if not os.path.exists("download"):
+                os.makedirs("download")
+            
+            video_path = download_tiktok(url)
+            
+            if video_path and os.path.exists(video_path):
+                with open(video_path, "rb") as f:
+                    update.message.reply_video(f)
+                
+                os.remove(video_path)
+                os.rmdir("download")
             else:
                 update.message.reply_text("Не удалось скачать видео с TikTok. Попробуй другую ссылку.")
         except Exception as e:
