@@ -5,8 +5,8 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
 from telegram import ChatMember, InlineKeyboardButton, InlineKeyboardMarkup
 
 TOKEN = os.environ.get("BOT_TOKEN", "8593561296:AAGeFVp3PrEqo8-5PqBDczAf4Roko3AuH7Q")
-CHANNEL_ID = -1004331031762
-CHANNEL_LINK = "https://t.me/+WTQG6VxcsZxjN2Uy"
+CHANNEL_ID = -1001479216675
+CHANNEL_LINK = "https://t.me/+IPHFA6LEuhVjZDcy"
 
 def check_subscription(update, context):
     user_id = update.effective_user.id
