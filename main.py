@@ -1,15 +1,62 @@
 import os
 import instaloader
 import yt_dlp
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
+from telegram import ChatMember, InlineKeyboardButton, InlineKeyboardMarkup
 
-TOKEN = os.environ.get("BOT_TOKEN", "ВАШ_ТОКЕН_СЮДА")
+TOKEN = os.environ.get("BOT_TOKEN", "8593561296:AAGeFVp3PrEqo8-5PqBDczAf4Roko3AuH7Q")
+CHANNEL_ID = -1004331031762
+CHANNEL_LINK = "https://t.me/+WTQG6VxcsZxjN2Uy"
+
+def check_subscription(update, context):
+    user_id = update.effective_user.id
+    try:
+        chat_member = context.bot.get_chat_member(CHANNEL_ID, user_id)
+        if chat_member.status in [ChatMember.MEMBER, ChatMember.ADMINISTRATOR, ChatMember.CREATOR]:
+            return True
+        return False
+    except:
+        return False
 
 def start(update, context):
+    if not check_subscription(update, context):
+        keyboard = [
+            [InlineKeyboardButton("📢 Подписаться на канал", url=CHANNEL_LINK)],
+            [InlineKeyboardButton("✅ Проверить подписку", callback_data="check_sub")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        update.message.reply_text(
+            "❗ Для использования бота подпишись на наш канал\n\n"
+            "После подписки нажми кнопку 'Проверить подписку'",
+            reply_markup=reply_markup
+        )
+        return
+    
     update.message.reply_text(
         "Привет! Я скачиваю видео и фото с Instagram и TikTok без водяных знаков!\n\n"
         "Просто отправь мне ссылку на пост, Reels или TikTok."
     )
+
+def check_subscription_callback(update, context):
+    query = update.callback_query
+    query.answer()
+    
+    if check_subscription(update, context):
+        query.edit_message_text(
+            "✅ Подписка подтверждена!\n\n"
+            "Теперь ты можешь использовать бота. Отправь мне ссылку на Instagram или TikTok."
+        )
+    else:
+        keyboard = [
+            [InlineKeyboardButton("📢 Подписаться на канал", url=CHANNEL_LINK)],
+            [InlineKeyboardButton("✅ Проверить подписку", callback_data="check_sub")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text(
+            "❗ Ты ещё не подписан на канал.\n\n"
+            "Подпишись и нажми 'Проверить подписку'",
+            reply_markup=reply_markup
+        )
 
 def download_tiktok(url):
     ydl_opts = {
@@ -25,6 +72,19 @@ def download_tiktok(url):
         return ydl.prepare_filename(info)
 
 def handle_message(update, context):
+    if not check_subscription(update, context):
+        keyboard = [
+            [InlineKeyboardButton("📢 Подписаться на канал", url=CHANNEL_LINK)],
+            [InlineKeyboardButton("✅ Проверить подписку", callback_data="check_sub")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        update.message.reply_text(
+            "❗ Подпишись на наш канал\n\n"
+            "После подписки нажми 'Проверить подписку'",
+            reply_markup=reply_markup
+        )
+        return
+    
     url = update.message.text
     update.message.reply_text("⏳ Скачиваю...")
     
@@ -95,6 +155,7 @@ def main():
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    dp.add_handler(CallbackQueryHandler(check_subscription_callback, pattern="check_sub"))
     updater.start_polling()
     updater.idle()
 
