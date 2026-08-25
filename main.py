@@ -139,9 +139,27 @@ def handle_message(update, context):
             if instagram_cookies:
                 cookiefile = get_cookies_file(instagram_cookies)
                 if cookiefile:
-                    cj = MozillaCookieJar()
-                    cj.load(cookiefile, ignore_expires=True)
-                    loader.context._session.cookies = cj
+                    try:
+                        cj = MozillaCookieJar()
+                        cj.load(cookiefile, ignore_expires=True)
+                        loader.context._session.cookies = cj
+                    except Exception as e:
+                        print(f"Ошибка загрузки cookies: {e}")
+                        with open(cookiefile, 'r') as f:
+                            for line in f:
+                                if line.strip() and not line.startswith('#'):
+                                    parts = line.strip().split('\t')
+                                    if len(parts) >= 7:
+                                        try:
+                                            loader.context._session.cookies.set(
+                                                parts[5],
+                                                parts[6],
+                                                domain=parts[0],
+                                                path=parts[2],
+                                                secure=parts[3] == 'TRUE'
+                                            )
+                                        except:
+                                            pass
             
             post = instaloader.Post.from_shortcode(loader.context, shortcode)
             
