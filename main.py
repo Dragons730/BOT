@@ -1,4 +1,5 @@
 import os
+import tempfile
 import instaloader
 import yt_dlp
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
@@ -7,6 +8,17 @@ from telegram import ChatMember, InlineKeyboardButton, InlineKeyboardMarkup
 TOKEN = os.environ.get("BOT_TOKEN", "8593561296:AAGeFVp3PrEqo8-5PqBDczAf4Roko3AuH7Q")
 CHANNEL_ID = -1001479216675
 CHANNEL_LINK = "https://t.me/+IPHFA6LEuhVjZDcy"
+
+def get_cookies_file(cookie_string):
+    if not cookie_string:
+        return None
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+            f.write(cookie_string)
+            return f.name
+    except Exception as e:
+        print(f"Ошибка создания файла cookies: {e}")
+        return None
 
 def check_subscription(update, context):
     user_id = update.effective_user.id
@@ -59,6 +71,9 @@ def check_subscription_callback(update, context):
         )
 
 def download_tiktok(url):
+    tiktok_cookies = os.environ.get("TIKTOK_COOKIES")
+    cookiefile = get_cookies_file(tiktok_cookies)
+    
     ydl_opts = {
         'outtmpl': 'download/%(title)s.%(ext)s',
         'quiet': True,
@@ -66,7 +81,12 @@ def download_tiktok(url):
         'extract_flat': False,
         'format': 'bestvideo+bestaudio/best',
         'merge_output_format': 'mp4',
+        'impersonate': 'chrome-131',
     }
+    
+    if cookiefile:
+        ydl_opts['cookiefile'] = cookiefile
+    
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         return ydl.prepare_filename(info)
@@ -111,6 +131,13 @@ def handle_message(update, context):
         try:
             shortcode = url.split("/")[-2]
             loader = instaloader.Instaloader()
+            
+            instagram_cookies = os.environ.get("INSTAGRAM_COOKIES")
+            if instagram_cookies:
+                cookiefile = get_cookies_file(instagram_cookies)
+                if cookiefile:
+                    loader.load_session_from_file(cookiefile)
+            
             post = instaloader.Post.from_shortcode(loader.context, shortcode)
             
             if not os.path.exists("download"):
