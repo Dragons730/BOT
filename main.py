@@ -127,62 +127,61 @@ def handle_message(update, context):
             update.message.reply_text(f"Ошибка при скачивании TikTok: {str(e)}")
         return
     
-if "instagram.com" in url:
-    try:
-        from http.cookiejar import MozillaCookieJar
-        import tempfile
-        
-        shortcode = url.split("/")[-2]
-        loader = instaloader.Instaloader()
-        
-        instagram_cookies = os.environ.get("INSTAGRAM_COOKIES")
-        cookiefile = None
-        if instagram_cookies:
-            cookiefile = get_cookies_file(instagram_cookies)
-            if cookiefile:
-                cj = MozillaCookieJar()
-                cj.load(cookiefile, ignore_expires=True)
-                loader.context._session.cookies = cj
-        
-        post = instaloader.Post.from_shortcode(loader.context, shortcode)
-        
-        if not os.path.exists("download"):
-            os.makedirs("download")
-        
-        loader.download_post(post, target="download")
-        
-        files = os.listdir("download")
-        video_found = False
-        photo_found = False
-        
-        for file in files:
-            if file.endswith(".mp4"):
-                with open(f"download/{file}", "rb") as f:
-                    update.message.reply_video(f)
-                video_found = True
-                break
-        
-        if not video_found:
+    if "instagram.com" in url:
+        try:
+            from http.cookiejar import MozillaCookieJar
+            
+            shortcode = url.split("/")[-2]
+            loader = instaloader.Instaloader()
+            
+            instagram_cookies = os.environ.get("INSTAGRAM_COOKIES")
+            cookiefile = None
+            if instagram_cookies:
+                cookiefile = get_cookies_file(instagram_cookies)
+                if cookiefile:
+                    cj = MozillaCookieJar()
+                    cj.load(cookiefile, ignore_expires=True)
+                    loader.context._session.cookies = cj
+            
+            post = instaloader.Post.from_shortcode(loader.context, shortcode)
+            
+            if not os.path.exists("download"):
+                os.makedirs("download")
+            
+            loader.download_post(post, target="download")
+            
+            files = os.listdir("download")
+            video_found = False
+            photo_found = False
+            
             for file in files:
-                if file.endswith(".jpg") or file.endswith(".png"):
+                if file.endswith(".mp4"):
                     with open(f"download/{file}", "rb") as f:
-                        update.message.reply_photo(f)
-                    photo_found = True
+                        update.message.reply_video(f)
+                    video_found = True
                     break
-        
-        if not video_found and not photo_found:
-            update.message.reply_text("Не удалось найти медиафайлы в этом посте")
-        
-        for file in os.listdir("download"):
-            os.remove(f"download/{file}")
-        os.rmdir("download")
-        
-        if cookiefile and os.path.exists(cookiefile):
-            os.remove(cookiefile)
-        
-    except Exception as e:
-        update.message.reply_text(f"Ошибка Instagram: {str(e)}")
-    return
+            
+            if not video_found:
+                for file in files:
+                    if file.endswith(".jpg") or file.endswith(".png"):
+                        with open(f"download/{file}", "rb") as f:
+                            update.message.reply_photo(f)
+                        photo_found = True
+                        break
+            
+            if not video_found and not photo_found:
+                update.message.reply_text("Не удалось найти медиафайлы в этом посте")
+            
+            for file in os.listdir("download"):
+                os.remove(f"download/{file}")
+            os.rmdir("download")
+            
+            if cookiefile and os.path.exists(cookiefile):
+                os.remove(cookiefile)
+            
+        except Exception as e:
+            update.message.reply_text(f"Ошибка Instagram: {str(e)}")
+        return
     
     update.message.reply_text("Отправь ссылку на Instagram или TikTok")
 
@@ -196,4 +195,4 @@ def main():
     updater.idle()
 
 if __name__ == "__main__":
-    main() 
+    main()
