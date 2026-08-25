@@ -133,6 +133,7 @@ def handle_message(update, context):
             loader = instaloader.Instaloader()
             
             instagram_cookies = os.environ.get("INSTAGRAM_COOKIES")
+            cookiefile = None
             if instagram_cookies:
                 cookiefile = get_cookies_file(instagram_cookies)
                 if cookiefile:
@@ -171,6 +172,9 @@ def handle_message(update, context):
                 os.remove(f"download/{file}")
             os.rmdir("download")
             
+            if cookiefile and os.path.exists(cookiefile):
+                os.remove(cookiefile)
+            
         except Exception as e:
             update.message.reply_text(f"Ошибка Instagram: {str(e)}")
         return
@@ -187,4 +191,4 @@ def main():
     updater.idle()
 
 if __name__ == "__main__":
-    main()
+    main() 
