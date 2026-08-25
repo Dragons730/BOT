@@ -136,7 +136,7 @@ def handle_message(update, context):
             if instagram_cookies:
                 cookiefile = get_cookies_file(instagram_cookies)
                 if cookiefile:
-                    loader.load_session_from_file(cookiefile)
+                    loader.context._session.cookies.load(cookiefile, ignore_expires=True)
             
             post = instaloader.Post.from_shortcode(loader.context, shortcode)
             
